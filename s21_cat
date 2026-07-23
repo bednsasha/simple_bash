@@ -1,0 +1,97 @@
+#include <stdio.h>
+//./cat /home/tresslau/Desktop/texts/1.txt /home/tresslau/Desktop/texts/2.txt /home/tresslau/Desktop/texts/3.txt
+typedef struct {
+    int b;  
+    int e;  
+    int n;  
+    int s;  
+    int t;  
+    int E;  
+    int T;  
+    int v;  
+} Flags;
+
+Flags flags = {0};
+int parse_flags(char *el);
+void print_file(const char *filename, int *counter);
+int print_char(int cur_ch, int *prev_ch, int *counter);
+int main(int argc, char *argv[]){
+    char *files[argc];  
+    int file_count = 0, counter=1;
+    for (int i = 1; i < argc; i++) {
+        if (parse_flags(argv[i])==0){
+            files[file_count]=argv[i];
+            file_count++;
+        }
+
+    }
+    for (int j=0; j<file_count; j++){
+        print_file(files[j], &counter);
+    }
+    
+    return 0;
+}
+
+void print_file(const char *filename, int *counter) {
+    FILE *file = fopen(filename, "r");
+    if (file != NULL) {
+        int ch, prev='\n'; 
+        while ((ch = fgetc(file)) != EOF) {
+            print_char(ch, &prev, counter);
+        }
+        fclose(file);
+    } else {
+        fprintf(stderr, "Error: Could not open file %s\n", filename);
+    }
+}
+
+int print_char(int cur_ch, int *prev_ch, int *counter){
+    int error=0;
+    //-b нумерует только непустые строки
+    if (flags.b==1 && *prev_ch=='\n' && cur_ch!='\n'){
+        printf("%6d\t", *counter);
+        (*counter)++;
+    }
+    //-e (+ -v) отображает символы конца строки как $; для \r\n отображает ^M$
+    //-n нумерует все выходные строки
+    if (flags.n==1 && *prev_ch=='\n'){
+        printf("%6d\t", *counter);
+        (*counter)++;
+    }
+    //-s сжимает несколько смежных пустых строк
+
+    //-t (+ -v) также отображает табы как ^I
+    // -E oтображает символ $ в самом конце каждой строки перед переходом на новую строку. (check situation Пока   $)
+    if (flags.E==1 && cur_ch=='\n'){
+        putchar('$');
+    }
+    // -T
+    // -v
+    putchar(cur_ch);
+    *prev_ch=cur_ch;
+
+    return error;
+    
+}
+//несовместимые комбинации флагов???
+int parse_flags(char *el){
+    if (el[0] == '-' && el[1] != '\0') {
+        for (int i = 1; el[i] != '\0'; i++) {
+            char flag = el[i];
+            switch(flag) {
+                case 'b': flags.b = 1; break;
+                case 'e': flags.e = 1; flags.v = 1; break;
+                case 'n': flags.n = 1; break;
+                case 's': flags.s = 1; break;
+                case 't': flags.t = 1; flags.v = 1; break;
+                case 'E': flags.E = 1; break;
+                case 'T': flags.T = 1; break;
+                default: return 0; 
+            }
+        }
+        return 1; 
+    }
+    return 0; 
+
+}
+
